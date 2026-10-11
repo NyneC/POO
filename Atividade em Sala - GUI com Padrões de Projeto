@@ -1,0 +1,264 @@
+/**
+ * Aluno: Eduardo Seiji Sugawara
+ * RA: a2810239
+ * 
+ * Domínio:
+ * Um mercado possui nome, condição do estacionamento, e produtos. Esses
+ * produtos possuem nome, preço e quantidade armazenada no estoque. 
+ * 
+ * Classes: Janela, Mercado, Produtos, Fabrica_produtos
+ * Subclasses: Alimentos, Limpeza
+ * 
+ * Exceções: Preço não pode receber valor <= 0 e Quantidade não pode
+ * receber valrores < 0
+ * 
+ * Padrões: Singleton e Factory Method
+ * 
+ * Uso de IA foi principalmente utilizado para fazer a parte da interface
+ * gráfica
+ * 
+*/
+
+//importa a biblioteca gráfica do Java(Swing)
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+
+//cria a classe Janela
+class Janela{
+    public Janela(){
+ 
+    //cria a janela
+        JFrame janela = new JFrame("Mercado");
+        janela.setSize(400, 350);
+        janela.setDefaultCloseOperation(
+        JFrame.EXIT_ON_CLOSE);
+        janela.setVisible(true);
+        
+        //cria o grid
+        janela.setLayout(new GridLayout(5,3));//linhas, colunas 
+        
+    //novo campo para o Factory Method
+        JPanel tipo_produto = new JPanel();
+        String[] opcoes = {"Alimento", "Limpeza"};
+        JComboBox<String> campo_tipo_produto = new JComboBox<>(opcoes);
+        tipo_produto.add(new JLabel("Tipo:"));
+        tipo_produto.add(campo_tipo_produto);
+        janela.add(tipo_produto);
+
+        //cria uma linha do grid
+        //cria o campo do produto
+        JPanel produto_nome = new JPanel();
+        //cria o campo que recebe a entrada do usuário
+        JTextField campo_nome = new JTextField(15);
+        //cria a escrita do campo
+        produto_nome.add(new JLabel("Produto:"));
+        produto_nome.add(campo_nome);
+        janela.add(produto_nome);        
+        
+        
+        //cria a linha que recebe o preço do produto
+        JPanel produto_preco = new JPanel();
+        JTextField campo_preco = new JTextField(15);
+        produto_preco.add(new JLabel("Preço:"));
+        produto_preco.add(campo_preco);
+        janela.add(produto_preco);
+
+
+        //cria a linha que recebe a quantidade de produtos
+        JPanel produto_quantidade = new JPanel();
+        JTextField campo_quantidade = new JTextField(15);
+        produto_quantidade.add(new JLabel("Quantidade:"));
+
+        produto_quantidade.add(campo_quantidade);
+        janela.add(produto_quantidade);
+
+
+    //criar o botão para salvar na main
+        JPanel campo_botao = new JPanel();
+        JButton botao_confirmar = new JButton("Salvar Produto");
+        campo_botao.add(botao_confirmar);
+        janela.add(campo_botao);
+
+        campo_preco.getText();
+        //só para deixar a janela visivel
+        janela.setVisible(true);
+
+    //código para fazer o botão funcionar
+        botao_confirmar.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e){
+                try{
+                    //recebe os valores da tela
+                    String tipo = (String) campo_tipo_produto.getSelectedItem();
+                    String nome = campo_nome.getText();
+                    double preco = Double.parseDouble(campo_preco.getText());
+                    int quantidade = Integer.parseInt(campo_quantidade.getText());
+
+                    //chama a Fábrica
+                    Produtos novo_produto= Fabrica_produto.criar(tipo, nome, preco, quantidade);
+
+                    //chama o Mercado
+                    Mercado mercado = Mercado.getInstance();
+
+                    //salva o produto no mercado
+                    mercado.setProd_mercado(novo_produto);
+
+                    //faz aparecer uma janela de "sucesso"
+                    JOptionPane.showMessageDialog(janela, "Produto:" + novo_produto.getNome() + "salvo com sucesso");
+                }catch (IllegalArgumentException erro){
+                    //"mostra erro de regra de negócio"
+                    JOptionPane.showMessageDialog(janela, erro.getMessage(), "Erro de validação", JOptionPane.ERROR_MESSAGE);
+                }catch (Exception erroDigita){
+                    JOptionPane.showMessageDialog(janela, "Erro! Digite apenas números no 'preço' e 'quantidade'", "Erro de Digitação", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+    }
+}
+
+class Mercado{
+    private String nome;
+    private boolean estacionamento;//vazio = 0, cheio = 1
+    private Produtos prod_mercado;
+
+//Nome: Singleton
+//Problema: a criação de outro mercado
+//Solução: construtor privado e metódo estático que entrega sempre o memso objeto
+//Consequências: o estado compartilha entre testes
+
+    private static Mercado instancia;
+    private Mercado(){}
+    public static Mercado getInstance() {
+        if (instancia == null) {
+            instancia = new Mercado();
+        }
+        return instancia;
+    }
+
+//construtor(private por causa do Singleton)
+    private Mercado(String nome, boolean estacionamento, Produtos prod_mercado){
+        this.nome = nome;
+        this.estacionamento = estacionamento;
+        this.prod_mercado = prod_mercado;
+    }
+    
+//getters
+    public String getNome(){return nome;}
+    public boolean getEstabelecimento(){return estacionamento;}
+    public Produtos getProd_mercado(){return prod_mercado;}
+
+//setter
+    public void setProd_mercado(Produtos prod_mercado){
+       this.prod_mercado = prod_mercado;
+    }
+}
+
+class Produtos{
+    private String nome;
+    private double preco;
+    private int quant_estoque;
+    
+//construtor (reaproveitando os setters)
+    public Produtos(String nome, double preco, int quant_estoque){
+        setNome(nome);
+        setPreco(preco);
+        setQuant_estoque(quant_estoque);
+    }
+
+//construtor 2 (sobrecarga)
+//apenas a quantidade não irá pedir, sempre será 0
+    public Produtos(String nome, double preco){
+        this(nome, preco, 0);
+    }
+
+//getters
+    public String getNome(){return nome;}
+    public double getPreco(){return preco;}
+    public int getQuant_estoque(){return quant_estoque;}
+
+//setters
+    public void setNome(String nome){
+        this.nome = nome;
+    }
+
+    //encapsulamento
+    //preço não pode ter valor negativo ou 0
+    public void setPreco(double preco){
+        if(preco <= 0){
+            //exceção
+            throw new IllegalArgumentException("\nErro! preço menor ou igual a 0!\n");
+        }else{
+            this.preco = preco;
+        }
+    }
+
+    //encapsulamento
+    //quantidade do estoque não pode ser negativo
+    public void setQuant_estoque(int quant_estoque){
+        if(quant_estoque < 0){
+            //exceção
+            throw new IllegalArgumentException("\nErro! Estoque negativo!\n");
+        }else{
+            this.quant_estoque = quant_estoque;
+        }
+    }
+}
+
+//Nome: Factory Method
+//Problema: vários tipos de produtos
+//Solução: uma classe que faça exclusivamente a função de criação
+//Consequências: adiciona uma classe a masi no projeto
+
+//Criar duas subclasses para poder usar o Factory Method
+//Subclasse Produtos_Alimenticios
+class Alimentos extends Produtos{
+    public Alimentos(String nome, double preco, int quant_estoque){
+        super(nome, preco, quant_estoque);
+    }
+}
+
+//Subclasse Limpeza
+class Limpeza extends Produtos{
+    public Limpeza(String nome , double preco, int quant_estoque){
+        super(nome, preco, quant_estoque);
+    }
+}
+
+//Criar a classe Fabrica
+class Fabrica_produto{
+    public static Produtos criar(String tipo,String nome, double preco, int quant_estoque){
+
+        if(tipo.equals("Alimento")){
+            return new Alimentos(nome, preco, quant_estoque);
+        }
+
+        if(tipo.equals("Limpeza")){
+            return new Limpeza(nome, preco, quant_estoque);
+        }
+        throw new IllegalArgumentException("\nTipo desconhecido!\n");
+
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+    //faz a interface gráfica aparecer
+    Janela janela = new Janela();
+
+    }
+}
+
+/*
+Consegui fazer o que pretendia, porém com uso de IA, sem ela
+eu teria conseguido fazer apenas as caixas de texto. E a parte
+mais trabalhosa foi fazer de fato o botão funcionar.
+*/
+
